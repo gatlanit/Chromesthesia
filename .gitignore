@@ -10,3 +10,6 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# MISC
+.DS_Store
