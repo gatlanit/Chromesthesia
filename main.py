@@ -9,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from src.algorithm import generate_melody, generate_chords, generate_combined
+from src.algorithm import generate_melody, generate_chords, generate_combined, DEFAULT_BPM
 from src.color_mapper import SCALES, ROOT_OFFSETS
 
 
@@ -26,7 +26,7 @@ def parse_args():
 Examples:
   python main.py --image sunset.jpg --mode chords --key D --output sunset.mid
   python main.py --image ocean.png  --mode melody --key Ab --scale minor --stride 8
-  python main.py --image forest.jpg --mode combined --chords 16 --bpm 80
+  python main.py --image forest.jpg --mode combined --chords 8
         """,
     )
 
@@ -40,8 +40,8 @@ Examples:
                         help="Root key (default: C)")
     parser.add_argument("--scale", "-s", default="major", choices=list(SCALES.keys()),
                         help="Scale type (default: major)")
-    parser.add_argument("--bpm", "-b", type=int, default=None,
-                        help="Tempo in BPM (default: 120 melody, 90 chords, 100 combined)")
+    parser.add_argument("--bpm", "-b", type=int, default=DEFAULT_BPM,
+                        help=f"Tempo in BPM (default: {DEFAULT_BPM}). DAWs can change this on import.")
 
     # Melody parameters
     parser.add_argument("--scan", default="horizontal", choices=SCAN_MODES,
@@ -52,8 +52,8 @@ Examples:
                         help="Maximum number of melody notes to generate (default: 512)")
 
     # Chord parameters
-    parser.add_argument("--chords", "-n", type=int, default=8,
-                        help="Number of chords in progression (default: 8)")
+    parser.add_argument("--chords", "-n", type=int, default=4,
+                        help="Number of chords in progression (default: 4)")
     parser.add_argument("--axis", default="vertical", choices=["vertical", "horizontal"],
                         help="Region split axis for chord mode (default: vertical)")
     parser.add_argument("--chord-duration", type=float, default=4.0,
@@ -79,34 +79,32 @@ def main():
     print(f"   Output: {output_path}\n")
 
     if args.mode == "melody":
-        bpm = args.bpm or 120
         generate_melody(
             str(image_path), output_path,
             root=args.key, scale=args.scale,
             scan_mode=args.scan, stride=args.stride,
-            bpm=bpm, max_notes=args.max_notes,
+            bpm=args.bpm, max_notes=args.max_notes,
         )
 
     elif args.mode == "chords":
-        bpm = args.bpm or 90
         generate_chords(
             str(image_path), output_path,
+            root=args.key, scale=args.scale,
             n_chords=args.chords, axis=args.axis,
-            chord_duration=args.chord_duration, bpm=bpm,
+            chord_duration=args.chord_duration, bpm=args.bpm,
         )
 
     elif args.mode == "combined":
-        bpm = args.bpm or 100
         generate_combined(
             str(image_path), output_path,
             root=args.key, scale=args.scale,
             scan_mode=args.scan, stride=args.stride,
             n_chords=args.chords, axis=args.axis,
             chord_duration=args.chord_duration,
-            bpm=bpm, max_notes=args.max_notes,
+            bpm=args.bpm, max_notes=args.max_notes,
         )
 
-    print(f"\n✅ Done. Open {output_path} in GarageBand, LMMS, or MuseScore.")
+    print(f"\n✅ Done. Open {output_path} in any DAW.")
 
 
 if __name__ == "__main__":
