@@ -550,7 +550,7 @@ def build_progression(
         chord_octave = 3  # Fixed octave for consistent voicing
         root_midi = pc + (chord_octave + 1) * 12
         intervals = CHORD_INTERVALS[quality]
-        midi_notes = [root_midi + iv for iv in intervals]
+        midi_notes = _snap_chord_to_scale(root_midi, intervals, root_offset, scale_intervals)
 
         chords.append(ChordEvent(
             midi_notes=midi_notes,
@@ -590,7 +590,9 @@ def _apply_resolutions(
             degree = pitch_class_to_scale_degree(curr.root_pitch_class, root_offset, scale_intervals)
             resolved_quality = _base_quality_for_degree(degree, scale_name) if degree >= 0 else ChordQuality.MAJOR
             nxt_chord = _rebuild_chord(curr.root_pitch_class, resolved_quality,
-                                       nxt.velocity, nxt.duration)
+                                       nxt.velocity, nxt.duration,
+                                       root_offset=root_offset,
+                                       scale_intervals=scale_intervals)
             chords[i + 1] = nxt_chord
 
         # dim → resolve: next chord moves up to the nearest stable chord
@@ -604,7 +606,9 @@ def _apply_resolutions(
             degree = pitch_class_to_scale_degree(resolve_pc, root_offset, scale_intervals)
             resolved_quality = _base_quality_for_degree(degree, scale_name) if degree >= 0 else ChordQuality.MINOR
             chords[i + 1] = _rebuild_chord(resolve_pc, resolved_quality,
-                                           nxt.velocity, nxt.duration)
+                                           nxt.velocity, nxt.duration,
+                                           root_offset=root_offset,
+                                           scale_intervals=scale_intervals)
 
     # Final chord: settle on tonic (stable ending)
     if n >= 2:
@@ -614,9 +618,42 @@ def _apply_resolutions(
                             ChordQuality.DIMINISHED):
             tonic_quality = _base_quality_for_degree(0, scale_name)
             chords[-1] = _rebuild_chord(root_offset, tonic_quality,
-                                        last.velocity, last.duration)
+                                        last.velocity, last.duration,
+                                        root_offset=root_offset,
+                                        scale_intervals=scale_intervals)
 
     return chords
+
+
+def _snap_chord_to_scale(
+    root_midi: int,
+    intervals: list[int],
+    root_offset: int,
+    scale_intervals: list[int],
+) -> list[int]:
+    """
+    Build chord MIDI notes from intervals, snapping each tone to the
+    nearest note in the scale. This ensures chord tones stay diatonic
+    (e.g. in D minor, a chord on E uses Bb not B).
+    """
+    scale_pcs = set((s + root_offset) % 12 for s in scale_intervals)
+    midi_notes = []
+    for iv in intervals:
+        raw_midi = root_midi + iv
+        pc = raw_midi % 12
+        if pc in scale_pcs:
+            midi_notes.append(raw_midi)
+        else:
+            # Snap to nearest scale tone: try one semitone down first, then up
+            down = (pc - 1) % 12
+            up = (pc + 1) % 12
+            if down in scale_pcs:
+                midi_notes.append(raw_midi - 1)
+            elif up in scale_pcs:
+                midi_notes.append(raw_midi + 1)
+            else:
+                midi_notes.append(raw_midi)
+    return midi_notes
 
 
 def _rebuild_chord(
@@ -625,11 +662,16 @@ def _rebuild_chord(
     velocity: int,
     duration: float,
     base_octave: int = 3,
+    root_offset: int = 0,
+    scale_intervals: list[int] = None,
 ) -> ChordEvent:
-    """Construct a ChordEvent from a pitch class and quality."""
+    """Construct a ChordEvent from a pitch class and quality, snapped to scale."""
     root_midi = pitch_class + (base_octave + 1) * 12
     intervals = CHORD_INTERVALS[quality]
-    midi_notes = [root_midi + iv for iv in intervals]
+    if scale_intervals is not None:
+        midi_notes = _snap_chord_to_scale(root_midi, intervals, root_offset, scale_intervals)
+    else:
+        midi_notes = [root_midi + iv for iv in intervals]
     return ChordEvent(
         midi_notes=midi_notes,
         duration=duration,
