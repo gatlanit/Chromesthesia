@@ -7,10 +7,10 @@ musically correct output.
 import pytest
 from src.color_mapper import (
     hue_to_pitch_class, snap_to_scale, saturation_to_quality,
-    value_to_octave, alpha_to_velocity, saturation_to_duration,
+    value_to_octave, alpha_to_velocity, pixel_to_duration,
     pitch_class_to_scale_degree, build_progression,
     pixel_to_note, region_to_chord,
-    ChordQuality, SCALES, NOTE_NAMES, ROOT_OFFSETS,
+    ChordQuality, SCALES, NOTE_NAMES, NOTE_DURATIONS, ROOT_OFFSETS,
     _base_quality_for_degree, _modify_quality,
 )
 
@@ -148,21 +148,41 @@ class TestAlphaToVelocity:
 
 # ── Saturation → Duration ─────────────────────────────────────────────────────
 
-class TestSaturationToDuration:
-    def test_high_saturation_is_short(self):
-        assert saturation_to_duration(1.0) < saturation_to_duration(0.0)
-
+class TestPixelToDuration:
     def test_always_returns_standard_note_length(self):
-        """Every saturation value should produce a real rhythmic value."""
-        from src.color_mapper import NOTE_DURATIONS
-        for s in [i / 20 for i in range(21)]:  # 0.0, 0.05, ..., 1.0
-            dur = saturation_to_duration(s)
-            assert dur in NOTE_DURATIONS, f"sat={s} produced {dur}, not a standard note length"
+        """Every pixel should produce a real rhythmic value."""
+        for r in range(0, 256, 64):
+            for g in range(0, 256, 64):
+                for b in range(0, 256, 64):
+                    dur = pixel_to_duration(r, g, b, 45.0, 0.1, 0.5)
+                    assert dur in NOTE_DURATIONS, f"rgb=({r},{g},{b}) → {dur}, not standard"
 
-    def test_full_range_maps_to_different_durations(self):
-        """Different saturations should produce different note lengths."""
-        durations = set(saturation_to_duration(s) for s in [0.0, 0.25, 0.5, 0.75, 1.0])
-        assert len(durations) >= 3, f"Expected variety, got: {durations}"
+    def test_greyscale_pixels_produce_varied_durations(self):
+        """Even greyscale pixels with subtle differences should vary rhythmically."""
+        durations = set()
+        # Simulate near-grey pixels like the beach image (R≈G≈B with slight drift)
+        for offset in range(20):
+            r, g, b = 100 + offset, 100 + offset // 2, 95 + offset
+            dur = pixel_to_duration(r, g, b, 40.0, 0.05, 0.4)
+            durations.add(dur)
+        assert len(durations) >= 3, f"Expected rhythmic variety from greyscale, got: {durations}"
+
+    def test_identical_pixels_produce_same_duration(self):
+        """Deterministic: same input = same output."""
+        d1 = pixel_to_duration(120, 130, 125, 40.0, 0.05, 0.5)
+        d2 = pixel_to_duration(120, 130, 125, 40.0, 0.05, 0.5)
+        assert d1 == d2
+
+    def test_varied_colors_produce_variety(self):
+        """Distinctly different colors should produce many different durations."""
+        from src.color_mapper import rgb_to_hsv
+        pixels = [(255,0,0), (0,255,0), (0,0,255), (255,255,0),
+                  (0,255,255), (128,0,128), (50,50,50), (200,200,200)]
+        durations = set()
+        for r, g, b in pixels:
+            h, s, v = rgb_to_hsv(r, g, b)
+            durations.add(pixel_to_duration(r, g, b, h, s, v))
+        assert len(durations) >= 3, f"Expected varied durations from different colors, got: {durations}"
 
 
 # ── Functional Harmony: Base Quality ──────────────────────────────────────────

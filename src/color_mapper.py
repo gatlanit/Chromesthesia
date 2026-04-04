@@ -204,19 +204,94 @@ NOTE_DURATIONS = [
 ]
 
 
-def saturation_to_duration(saturation: float) -> float:
+def pixel_to_duration(r: int, g: int, b: int, hue: float,
+                       saturation: float, brightness: float) -> float:
     """
-    Map saturation to a standard musical note duration.
-    High saturation = short/staccato, low saturation = long/sustained.
-    Always returns a real rhythmic value (quantized to standard note lengths).
+    Map a pixel to a standard musical note duration.
+
+    Uses raw RGB channels alongside HSV so that even near-greyscale images
+    (where H and S are flat) still produce varied rhythms from the subtle
+    per-channel differences between R, G, and B.
+
+    Rhythm drivers:
+    - RGB channel spread (max - min): even small differences create variation
+    - Brightness: extremes = short/punchy, mid = sustained
+    - Raw luminance modulo: creates a hash-like distribution across the
+      duration table so adjacent similar pixels don't all land on the same beat
     """
-    # Invert: high sat → low index (short), low sat → high index (long)
-    idx = int((1 - saturation) * (len(NOTE_DURATIONS) - 0.01))
+    # Cast to plain int to avoid numpy uint8 overflow
+    ri, gi, bi = int(r), int(g), int(b)
+
+    # RGB channel spread: 0–255, even greyscale has slight differences
+    channel_spread = max(ri, gi, bi) - min(ri, gi, bi)  # 0–255
+    spread_norm = min(channel_spread / 30.0, 1.0)  # normalize, cap at 30
+
+    # Brightness energy: distance from midpoint
+    bright_energy = abs(brightness - 0.5) * 2.0
+
+    # Luminance hash: use the raw pixel values to create pseudo-random
+    # distribution across duration buckets. This ensures adjacent pixels
+    # with slightly different values map to different durations.
+    lum_hash = ((ri * 7 + gi * 13 + bi * 23) % 256) / 255.0
+
+    # Saturation component
+    sat_energy = saturation
+
+    # Combine — lum_hash gets highest weight to ensure maximum variation
+    score = (
+        lum_hash * 0.45 +
+        bright_energy * 0.20 +
+        spread_norm * 0.20 +
+        sat_energy * 0.15
+    )
+
+    # Map score to duration index (high score = short note = low index)
+    idx = int((1 - score) * (len(NOTE_DURATIONS) - 0.01))
     idx = max(0, min(len(NOTE_DURATIONS) - 1, idx))
     return NOTE_DURATIONS[idx]
 
 
 # ── Pixel → Note ───────────────────────────────────────────────────────────────
+
+def _pixel_to_scale_degree(r: int, g: int, b: int,
+                            hue: float, saturation: float, brightness: float,
+                            n_degrees: int) -> int:
+    """
+    Map a pixel to a scale degree index (0 to n_degrees-1).
+
+    For colorful pixels (S > 0.20): hue drives the pitch via circle of fifths.
+    For monochrome/desaturated pixels: uses a luminance hash to distribute
+    pitches across all scale degrees, ensuring melodic variety even from
+    greyscale images.
+    """
+    if saturation > 0.20:
+        # Colorful: hue drives pitch, return raw pitch class for external handling
+        return -1  # signal to use hue-based path
+
+    # Monochrome path: hash RGB to spread across scale degrees
+    ri, gi, bi = int(r), int(g), int(b)
+    # Use a different hash than duration so pitch and rhythm vary independently
+    pitch_hash = ((ri * 11 + gi * 17 + bi * 31) % 256) / 255.0
+
+    # Brightness adds a melodic contour: bright = higher degrees, dark = lower
+    contour = brightness * 0.4 + pitch_hash * 0.6
+
+    return int(contour * (n_degrees - 0.01))
+
+
+def _pixel_to_octave(r: int, g: int, b: int, brightness: float) -> int:
+    """
+    Map a pixel to an octave (3–5). Uses both brightness and RGB hash
+    so that monochrome images get octave variety instead of sitting on one.
+    """
+    ri, gi, bi = int(r), int(g), int(b)
+    # Hash for subtle per-pixel variation
+    oct_hash = ((ri * 3 + gi * 5 + bi * 7) % 128) / 127.0
+
+    # Brightness is the primary driver, hash adds local variation
+    score = brightness * 0.6 + oct_hash * 0.4
+    return 3 + int(score * 2.99)  # octave 3, 4, or 5
+
 
 def pixel_to_note(
     r: int, g: int, b: int, a: int,
@@ -224,7 +299,13 @@ def pixel_to_note(
     scale: str = "major",
     rest_alpha_threshold: int = 30,
 ) -> NoteEvent:
-    """Convert a single RGBA pixel to a NoteEvent."""
+    """
+    Convert a single RGBA pixel to a NoteEvent.
+
+    For colorful images, hue drives pitch via the circle of fifths.
+    For monochrome/greyscale images, RGB channel differences and brightness
+    spread notes across all scale degrees for melodic variety.
+    """
     if a < rest_alpha_threshold:
         return NoteEvent(midi_note=0, duration=0.5, velocity=0, is_rest=True)
 
@@ -232,13 +313,22 @@ def pixel_to_note(
 
     root_offset = ROOT_OFFSETS[root]
     scale_intervals = SCALES[scale]
+    n_degrees = len(scale_intervals)
 
-    raw_pitch_class = hue_to_pitch_class(h)
-    pitch_class = snap_to_scale(raw_pitch_class, root_offset, scale_intervals)
-    octave = value_to_octave(v)
+    degree_idx = _pixel_to_scale_degree(r, g, b, h, s, v, n_degrees)
+
+    if degree_idx >= 0:
+        # Monochrome path: degree index maps directly to scale
+        pitch_class = (scale_intervals[degree_idx] + root_offset) % 12
+    else:
+        # Colorful path: hue → pitch class → snap to scale
+        raw_pitch_class = hue_to_pitch_class(h)
+        pitch_class = snap_to_scale(raw_pitch_class, root_offset, scale_intervals)
+
+    octave = _pixel_to_octave(r, g, b, v)
     midi_note = pitch_class + (octave + 1) * 12
 
-    duration = saturation_to_duration(s)
+    duration = pixel_to_duration(r, g, b, h, s, v)
     velocity = alpha_to_velocity(a)
 
     return NoteEvent(midi_note=midi_note, duration=duration, velocity=velocity)

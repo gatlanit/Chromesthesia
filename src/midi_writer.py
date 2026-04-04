@@ -91,9 +91,10 @@ def write_combined(
     melody_program: int = 0,  # 0  = Piano
 ) -> None:
     """
-    Write a two-track MIDI: chord progression on track 0, melody on track 1.
+    Write a two-track MIDI file (type 1): chord progression on track 0,
+    melody on track 1. Both tracks are in a single .mid file.
     """
-    mid = MidiFile(ticks_per_beat=ticks_per_beat)
+    mid = MidiFile(type=1, ticks_per_beat=ticks_per_beat)
 
     # ── Track 0: Chords ───────────────────────────────────────────────────────
     chord_track = MidiTrack()
