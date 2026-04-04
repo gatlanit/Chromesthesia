@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
-Chromatic Synthesis — Image → MIDI
-Usage:
+Chromesthesia
+How to use:
   python main.py --image photo.jpg --mode chords --key C --scale major --output out.mid
 """
 
 import argparse
 import sys
 from pathlib import Path
-
 from src.algorithm import generate_melody, generate_chords, generate_combined, DEFAULT_BPM
 from src.color_mapper import SCALES, ROOT_OFFSETS
 
@@ -19,7 +18,7 @@ SCAN_MODES = ["horizontal", "vertical", "diagonal", "spiral"]
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="chromatic-synthesis",
+        prog="Chromesthesia",
         description="Convert an image's RGBA values into a MIDI melody or chord progression.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -72,7 +71,7 @@ def main():
 
     output_path = args.output or image_path.stem + ".mid"
 
-    print(f"\n🎨 Chromatic Synthesis")
+    print(f"\n Chromesthesia ")
     print(f"   Image : {image_path}")
     print(f"   Mode  : {args.mode}")
     print(f"   Key   : {args.key} {args.scale}")
@@ -104,7 +103,7 @@ def main():
             bpm=args.bpm,
         )
 
-    print(f"\n✅ Done. Open {output_path} in any DAW.")
+    print(f"\nDone. Open {output_path} in any DAW.")
 
 
 if __name__ == "__main__":

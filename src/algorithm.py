@@ -1,6 +1,6 @@
 """
 algorithm.py
-Orchestrates the Chromatic Synthesis algorithm:
+Orchestrates the Chromesthesia algorithm:
   - melody mode:   pixel scan → monophonic note sequence (capped to N bars)
   - chords mode:   region average → chord progression (functional harmony)
   - combined mode: both tracks simultaneously, melody matches chord length

@@ -1,5 +1,5 @@
 """
-server.py — Flask backend for Chromatic Synthesis web app.
+server.py — Flask backend for Chromesthesia web app.
 
 Routes:
   GET  /           → serves the React frontend
@@ -122,6 +122,6 @@ def generate():
 
 
 if __name__ == "__main__":
-    print("\n🎨 Chromatic Synthesis — Web App")
+    print("\nChromesthesia - Web App")
     print("   http://localhost:5000\n")
     app.run(debug=True, port=5000)
