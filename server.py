@@ -88,6 +88,7 @@ def generate():
                 image_path, output_path,
                 root=key, scale=scale,
                 n_chords=n_chords, bpm=DEFAULT_BPM,
+                scan_mode=scan, stride=stride,
             )
         elif mode == "combined":
             generate_combined(

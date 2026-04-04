@@ -8,7 +8,7 @@ Orchestrates the Chromesthesia algorithm:
 
 from PIL import Image
 
-from src.image_reader import load_image, sample_image, get_regions, average_region
+from src.image_reader import load_image, sample_image, get_regions, average_region, sample_regions_by_scan
 from src.color_mapper import (
     pixel_to_note, build_progression,
     NoteEvent, ChordEvent,
@@ -95,16 +95,17 @@ def generate_chords(
     axis: str = "vertical",
     chord_duration: float = 4.0,
     bpm: int = DEFAULT_BPM,
+    scan_mode: str = "horizontal",
+    stride: int = 4,
 ) -> list[ChordEvent]:
     """
-    Divide image into N regions and produce a MIDI chord progression
-    using functional harmony with tension/resolution.
+    Sample the image along the scan path, split into N regions, and produce
+    a MIDI chord progression using functional harmony with tension/resolution.
     """
     img = load_image(image_path)
     print(f"  Image loaded: {img.size[0]}×{img.size[1]} px")
 
-    regions = get_regions(img, n_chords, axis=axis)
-    region_data = [average_region(r) for r in regions]
+    region_data = sample_regions_by_scan(img, n_chords, scan_mode=scan_mode, stride=stride)
 
     chords = build_progression(
         region_data,
@@ -141,8 +142,7 @@ def generate_combined(
     print(f"  Image loaded: {img.size[0]}×{img.size[1]} px")
 
     # ── Chord track (functional harmony) ──────────────────────────────────────
-    regions = get_regions(img, n_chords, axis=axis)
-    region_data = [average_region(r) for r in regions]
+    region_data = sample_regions_by_scan(img, n_chords, scan_mode=scan_mode, stride=stride)
 
     chords = build_progression(
         region_data,

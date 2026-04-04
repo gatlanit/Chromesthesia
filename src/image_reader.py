@@ -131,3 +131,33 @@ def get_regions(img: Image.Image, n: int, axis: str = "vertical") -> list[np.nda
 def average_region(region: np.ndarray) -> tuple[float, float, float, float]:
     """Return mean (R, G, B, A) of a pixel region."""
     return tuple(region.mean(axis=(0, 1)).tolist())
+
+
+def sample_regions_by_scan(
+    img: Image.Image, n: int, scan_mode: str = "horizontal", stride: int = 1,
+) -> list[tuple[float, float, float, float]]:
+    """
+    Sample pixels along the given scan path, then split them into N equal
+    chunks and average each chunk. This makes chord regions follow the same
+    scan path as the melody, so different scan modes produce different
+    chord progressions from the same image.
+
+    Returns a list of N averaged (R, G, B, A) tuples.
+    """
+    pixels = list(sample_image(img, mode=scan_mode, stride=stride))
+    total = len(pixels)
+    chunk_size = max(total // n, 1)
+
+    regions = []
+    for i in range(n):
+        start = i * chunk_size
+        # Last chunk gets any remainder
+        end = start + chunk_size if i < n - 1 else total
+        chunk = pixels[start:end]
+        if not chunk:
+            chunk = [pixels[-1]]  # fallback to last pixel
+        arr = np.array(chunk, dtype=np.float64)
+        avg = tuple(arr.mean(axis=0).tolist())
+        regions.append(avg)
+
+    return regions
