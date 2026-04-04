@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chromatic Synthesis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#0f0f0f',
+            card: '#1a1a1a',
+            border: '#2a2a2a',
+            accent: '#8b5cf6',
+            'accent-hover': '#7c3aed',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f0f0f; }
+    .drop-zone-active { border-color: #8b5cf6 !important; background: rgba(139, 92, 246, 0.08) !important; }
+    @keyframes pulse-border { 0%, 100% { border-color: #2a2a2a; } 50% { border-color: #8b5cf6; } }
+    .generating { animation: pulse-border 1.5s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useCallback } = React;
+
+    const KEYS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const SCALES = ['major','minor','pentatonic','dorian','mixolydian'];
+    const MODES = ['combined','chords','melody'];
+    const SCANS = ['horizontal','vertical','diagonal','spiral'];
+    const LENGTHS = [4, 8];
+
+    function Select({ label, value, onChange, options, formatLabel }) {
+      return (
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">{label}</label>
+          <select
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-white text-sm
+                       focus:outline-none focus:border-accent transition-colors cursor-pointer
+                       appearance-none"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+          >
+            {options.map(opt => (
+              <option key={opt} value={opt}>
+                {formatLabel ? formatLabel(opt) : opt}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    function App() {
+      const [file, setFile] = useState(null);
+      const [preview, setPreview] = useState(null);
+      const [mode, setMode] = useState('combined');
+      const [musicKey, setMusicKey] = useState('C');
+      const [scale, setScale] = useState('minor');
+      const [scan, setScan] = useState('horizontal');
+      const [length, setLength] = useState(4);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+      const [success, setSuccess] = useState(false);
+      const [dragOver, setDragOver] = useState(false);
+      const fileInputRef = useRef(null);
+
+      const handleFile = useCallback((f) => {
+        if (!f) return;
+        setFile(f);
+        setError(null);
+        setSuccess(false);
+        const reader = new FileReader();
+        reader.onload = (e) => setPreview(e.target.result);
+        reader.readAsDataURL(f);
+      }, []);
+
+      const handleDrop = useCallback((e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const f = e.dataTransfer.files[0];
+        if (f && f.type.startsWith('image/')) handleFile(f);
+      }, [handleFile]);
+
+      const handleGenerate = async () => {
+        if (!file) { setError('Upload an image first'); return; }
+
+        setLoading(true);
+        setError(null);
+        setSuccess(false);
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('mode', mode);
+        formData.append('key', musicKey);
+        formData.append('scale', scale);
+        formData.append('scan', scan);
+        formData.append('chords', length.toString());
+        formData.append('stride', '4');
+
+        try {
+          const res = await fetch('/generate', { method: 'POST', body: formData });
+
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Generation failed');
+          }
+
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `chromatic-synthesis-${mode}-${musicKey}-${scale}.mid`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setSuccess(true);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const clearImage = () => {
+        setFile(null);
+        setPreview(null);
+        setSuccess(false);
+        setError(null);
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-lg">
+
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-semibold text-white tracking-tight">
+                Chromatic Synthesis
+              </h1>
+              <p className="text-zinc-500 text-sm mt-1">Image → MIDI</p>
+            </div>
+
+            <div className={`bg-card border border-border rounded-2xl p-6 space-y-5 ${loading ? 'generating' : ''}`}>
+
+              {/* Image Upload */}
+              <div
+                className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer
+                  ${dragOver ? 'drop-zone-active' : 'border-border hover:border-zinc-600'}
+                  ${preview ? 'p-0 overflow-hidden' : 'p-8'}`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => !preview && fileInputRef.current?.click()}
+              >
+                {preview ? (
+                  <div className="relative group">
+                    <img src={preview} alt="Preview" className="w-full h-48 object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); clearImage(); }}
+                        className="opacity-0 group-hover:opacity-100 bg-red-500/80 hover:bg-red-500 text-white
+                                   text-xs px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="absolute bottom-2 left-2 bg-black/60 text-zinc-300 text-xs px-2 py-1 rounded">
+                      {file?.name}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">🎨</div>
+                    <p className="text-zinc-400 text-sm">Drop an image here or click to upload</p>
+                    <p className="text-zinc-600 text-xs mt-1">JPG, PNG, WebP, GIF</p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleFile(e.target.files[0])}
+                />
+              </div>
+
+              {/* Options Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <Select label="Mode" value={mode} onChange={setMode} options={MODES}
+                  formatLabel={m => m.charAt(0).toUpperCase() + m.slice(1)} />
+                <Select label="Key" value={musicKey} onChange={setMusicKey} options={KEYS} />
+                <Select label="Scale" value={scale} onChange={setScale} options={SCALES}
+                  formatLabel={s => s.charAt(0).toUpperCase() + s.slice(1)} />
+                <Select label="Length" value={length} onChange={v => setLength(Number(v))} options={LENGTHS}
+                  formatLabel={l => `${l} bars`} />
+                {mode !== 'chords' && (
+                  <Select label="Scan Path" value={scan} onChange={setScan} options={SCANS}
+                    formatLabel={s => s.charAt(0).toUpperCase() + s.slice(1)} />
+                )}
+              </div>
+
+              {/* Generate Button */}
+              <button
+                onClick={handleGenerate}
+                disabled={!file || loading}
+                className={`w-full py-3 rounded-xl font-medium text-sm transition-all
+                  ${!file || loading
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                    : 'bg-accent hover:bg-accent-hover text-white active:scale-[0.98]'
+                  }`}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Generating...
+                  </span>
+                ) : success ? (
+                  <span>✓ Downloaded — Generate Again</span>
+                ) : (
+                  <span>Generate MIDI</span>
+                )}
+              </button>
+
+              {/* Status Messages */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2.5 text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+              {success && !error && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-2.5 text-emerald-400 text-sm">
+                  MIDI file downloaded. Open it in GarageBand, MuseScore, or any DAW.
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <p className="text-center text-zinc-700 text-xs mt-4">
+              Color wheel → Circle of fifths · HSV → Pitch, quality, rhythm
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

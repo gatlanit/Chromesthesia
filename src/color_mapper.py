@@ -279,18 +279,7 @@ def _pixel_to_scale_degree(r: int, g: int, b: int,
     return int(contour * (n_degrees - 0.01))
 
 
-def _pixel_to_octave(r: int, g: int, b: int, brightness: float) -> int:
-    """
-    Map a pixel to an octave (3–5). Uses both brightness and RGB hash
-    so that monochrome images get octave variety instead of sitting on one.
-    """
-    ri, gi, bi = int(r), int(g), int(b)
-    # Hash for subtle per-pixel variation
-    oct_hash = ((ri * 3 + gi * 5 + bi * 7) % 128) / 127.0
-
-    # Brightness is the primary driver, hash adds local variation
-    score = brightness * 0.6 + oct_hash * 0.4
-    return 3 + int(score * 2.99)  # octave 3, 4, or 5
+MELODY_OCTAVE = 4  # Lock melody to a single octave for cohesion
 
 
 def pixel_to_note(
@@ -325,8 +314,7 @@ def pixel_to_note(
         raw_pitch_class = hue_to_pitch_class(h)
         pitch_class = snap_to_scale(raw_pitch_class, root_offset, scale_intervals)
 
-    octave = _pixel_to_octave(r, g, b, v)
-    midi_note = pitch_class + (octave + 1) * 12
+    midi_note = pitch_class + (MELODY_OCTAVE + 1) * 12
 
     duration = pixel_to_duration(r, g, b, h, s, v)
     velocity = alpha_to_velocity(a)
@@ -345,10 +333,10 @@ def region_to_chord(
 
     pitch_class = hue_to_pitch_class(h)
     quality = saturation_to_quality(s)
-    octave = value_to_octave(v, base_octave=3)
     velocity = alpha_to_velocity(int(avg_a))
 
-    root_midi = pitch_class + (octave + 1) * 12
+    chord_octave = 3  # Fixed octave for consistent voicing
+    root_midi = pitch_class + (chord_octave + 1) * 12
     intervals = CHORD_INTERVALS[quality]
     midi_notes = [root_midi + interval for interval in intervals]
 
@@ -559,8 +547,8 @@ def build_progression(
         if degree == 4 and quality in (ChordQuality.MAJOR, ChordQuality.MINOR):
             quality = ChordQuality.DOMINANT_7TH
 
-        octave = value_to_octave(reg["v"], base_octave=3)
-        root_midi = pc + (octave + 1) * 12
+        chord_octave = 3  # Fixed octave for consistent voicing
+        root_midi = pc + (chord_octave + 1) * 12
         intervals = CHORD_INTERVALS[quality]
         midi_notes = [root_midi + iv for iv in intervals]
 
@@ -636,7 +624,7 @@ def _rebuild_chord(
     quality: ChordQuality,
     velocity: int,
     duration: float,
-    base_octave: int = 4,
+    base_octave: int = 3,
 ) -> ChordEvent:
     """Construct a ChordEvent from a pitch class and quality."""
     root_midi = pitch_class + (base_octave + 1) * 12
