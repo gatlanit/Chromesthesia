@@ -152,9 +152,17 @@ class TestSaturationToDuration:
     def test_high_saturation_is_short(self):
         assert saturation_to_duration(1.0) < saturation_to_duration(0.0)
 
-    def test_duration_respects_bounds(self):
-        assert saturation_to_duration(1.0) >= 0.25
-        assert saturation_to_duration(0.0) <= 2.0
+    def test_always_returns_standard_note_length(self):
+        """Every saturation value should produce a real rhythmic value."""
+        from src.color_mapper import NOTE_DURATIONS
+        for s in [i / 20 for i in range(21)]:  # 0.0, 0.05, ..., 1.0
+            dur = saturation_to_duration(s)
+            assert dur in NOTE_DURATIONS, f"sat={s} produced {dur}, not a standard note length"
+
+    def test_full_range_maps_to_different_durations(self):
+        """Different saturations should produce different note lengths."""
+        durations = set(saturation_to_duration(s) for s in [0.0, 0.25, 0.5, 0.75, 1.0])
+        assert len(durations) >= 3, f"Expected variety, got: {durations}"
 
 
 # ── Functional Harmony: Base Quality ──────────────────────────────────────────

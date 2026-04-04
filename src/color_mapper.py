@@ -191,11 +191,29 @@ def alpha_to_velocity(alpha: int) -> int:
     return int((alpha / 255) * 80) + 40
 
 
-def saturation_to_duration(saturation: float,
-                            min_dur: float = 0.25,
-                            max_dur: float = 2.0) -> float:
-    """High saturation = short/staccato; low saturation = long/sustained."""
-    return min_dur + (1 - saturation) * (max_dur - min_dur)
+# Standard note durations in beats (4/4 time), ordered short → long
+NOTE_DURATIONS = [
+    0.25,   # sixteenth note
+    0.5,    # eighth note
+    0.75,   # dotted eighth
+    1.0,    # quarter note
+    1.5,    # dotted quarter
+    2.0,    # half note
+    3.0,    # dotted half
+    4.0,    # whole note
+]
+
+
+def saturation_to_duration(saturation: float) -> float:
+    """
+    Map saturation to a standard musical note duration.
+    High saturation = short/staccato, low saturation = long/sustained.
+    Always returns a real rhythmic value (quantized to standard note lengths).
+    """
+    # Invert: high sat → low index (short), low sat → high index (long)
+    idx = int((1 - saturation) * (len(NOTE_DURATIONS) - 0.01))
+    idx = max(0, min(len(NOTE_DURATIONS) - 1, idx))
+    return NOTE_DURATIONS[idx]
 
 
 # ── Pixel → Note ───────────────────────────────────────────────────────────────

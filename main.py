@@ -25,7 +25,7 @@ def parse_args():
         epilog="""
 Examples:
   python main.py --image sunset.jpg --mode chords --key D --output sunset.mid
-  python main.py --image ocean.png  --mode melody --key Ab --scale minor --stride 8
+  python main.py --image ocean.png  --mode melody --key Ab --scale minor --bars 8
   python main.py --image forest.jpg --mode combined --chords 8
         """,
     )
@@ -48,8 +48,8 @@ Examples:
                         help="Pixel scan path for melody mode (default: horizontal)")
     parser.add_argument("--stride", type=int, default=4,
                         help="Sample every Nth pixel for melody (default: 4)")
-    parser.add_argument("--max-notes", type=int, default=512,
-                        help="Maximum number of melody notes to generate (default: 512)")
+    parser.add_argument("--bars", type=int, default=4,
+                        help="Length of melody in bars (default: 4). In combined mode, melody matches chord length.")
 
     # Chord parameters
     parser.add_argument("--chords", "-n", type=int, default=4,
@@ -83,7 +83,7 @@ def main():
             str(image_path), output_path,
             root=args.key, scale=args.scale,
             scan_mode=args.scan, stride=args.stride,
-            bpm=args.bpm, max_notes=args.max_notes,
+            bpm=args.bpm, n_bars=args.bars,
         )
 
     elif args.mode == "chords":
@@ -101,7 +101,7 @@ def main():
             scan_mode=args.scan, stride=args.stride,
             n_chords=args.chords, axis=args.axis,
             chord_duration=args.chord_duration,
-            bpm=args.bpm, max_notes=args.max_notes,
+            bpm=args.bpm,
         )
 
     print(f"\n✅ Done. Open {output_path} in any DAW.")
