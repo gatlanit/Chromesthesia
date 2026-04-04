@@ -30,23 +30,23 @@ SCALES = {
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 # Circle of fifths order: C G D A E B F# Db Ab Eb Bb F
-# Maps 12 hue sectors (30° each) → pitch class (0–11)
+# Maps 12 hue sectors (30° each) to pitch class (0–11)
 HUE_TO_PITCH_CLASS = [
-    0,   # 0°   Red          → C
-    7,   # 30°  Red-Orange   → G
-    2,   # 60°  Orange       → D
-    9,   # 90°  Yellow-Org   → A
-    4,   # 120° Yellow       → E
-    11,  # 150° Yellow-Grn   → B
-    6,   # 180° Green        → F#/Gb
-    1,   # 210° Cyan-Green   → Db
-    8,   # 240° Blue         → Ab
-    3,   # 270° Blue-Violet  → Eb
-    10,  # 300° Violet       → Bb
-    5,   # 330° Red-Violet   → F
+    0,   # 0°   Red          to C
+    7,   # 30°  Red-Orange   to G
+    2,   # 60°  Orange       to D
+    9,   # 90°  Yellow-Org   to A
+    4,   # 120° Yellow       to E
+    11,  # 150° Yellow-Grn   to B
+    6,   # 180° Green        to F#/Gb
+    1,   # 210° Cyan-Green   to Db
+    8,   # 240° Blue         to Ab
+    3,   # 270° Blue-Violet  to Eb
+    10,  # 300° Violet       to Bb
+    5,   # 330° Red-Violet   to F
 ]
 
-# Named root notes → semitone offset from C
+# Named root notes to semitone offset from C
 ROOT_OFFSETS = {
     "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3,
     "E": 4, "F": 5, "F#": 6, "Gb": 6, "G": 7, "G#": 8,
@@ -81,7 +81,7 @@ CHORD_INTERVALS = {
     ChordQuality.MINOR_ADD9:   [0, 3, 7, 14],
 }
 
-# ── Functional harmony: scale degree → base chord quality ────────────────────
+# ── Functional harmony: scale degree to base chord quality ────────────────────
 # In major: I=maj, ii=min, iii=min, IV=maj, V=maj, vi=min, vii°=dim
 # These are the *base* qualities; saturation/brightness modify them.
 
@@ -183,7 +183,7 @@ def saturation_to_quality(saturation: float) -> ChordQuality:
 
 def value_to_octave(value: float, base_octave: int = 3) -> int:
     """Map brightness (0–1) to MIDI octave."""
-    return base_octave + int(value * 2.99)  # 0–1 → octave 3, 4, or 5
+    return base_octave + int(value * 2.99)  # 0–1 to octave 3, 4, or 5
 
 
 def alpha_to_velocity(alpha: int) -> int:
@@ -191,7 +191,7 @@ def alpha_to_velocity(alpha: int) -> int:
     return int((alpha / 255) * 80) + 40
 
 
-# Standard note durations in beats (4/4 time), ordered short → long
+# Standard note durations in beats (4/4 time), ordered short to long
 NOTE_DURATIONS = [
     0.25,   # sixteenth note
     0.5,    # eighth note
@@ -251,7 +251,7 @@ def pixel_to_duration(r: int, g: int, b: int, hue: float,
     return NOTE_DURATIONS[idx]
 
 
-# ── Pixel → Note ───────────────────────────────────────────────────────────────
+# ── Pixel to Note ───────────────────────────────────────────────────────────────
 
 def _pixel_to_scale_degree(r: int, g: int, b: int,
                             hue: float, saturation: float, brightness: float,
@@ -310,7 +310,7 @@ def pixel_to_note(
         # Monochrome path: degree index maps directly to scale
         pitch_class = (scale_intervals[degree_idx] + root_offset) % 12
     else:
-        # Colorful path: hue → pitch class → snap to scale
+        # Colorful path: hue to pitch class to snap to scale
         raw_pitch_class = hue_to_pitch_class(h)
         pitch_class = snap_to_scale(raw_pitch_class, root_offset, scale_intervals)
 
@@ -322,7 +322,7 @@ def pixel_to_note(
     return NoteEvent(midi_note=midi_note, duration=duration, velocity=velocity)
 
 
-# ── Region → Chord (simple, legacy) ──────────────────────────────────────────
+# ── Region to Chord (simple, legacy) ──────────────────────────────────────────
 
 def region_to_chord(
     avg_r: float, avg_g: float, avg_b: float, avg_a: float,
@@ -381,13 +381,13 @@ def _modify_quality(base: ChordQuality, saturation: float, brightness: float,
     and position - this avoids the old problem of every low-sat region
     hitting the same branch and producing identical chord types.
     """
-    # ── High contrast → suspension (tension point) ────────────────────────────
+    # ── High contrast to suspension (tension point) ────────────────────────────
     if brightness_delta > 0.15:
         # Alternate between sus4 and sus2 based on position
         if base in (ChordQuality.MAJOR, ChordQuality.MINOR):
             return ChordQuality.SUSPENDED_4 if position % 2 == 0 else ChordQuality.SUSPENDED_2
 
-    # ── Very dark + desaturated → diminished (rare, moody) ────────────────────
+    # ── Very dark + desaturated to diminished (rare, moody) ────────────────────
     if brightness < 0.25 and saturation < 0.15:
         return ChordQuality.DIMINISHED
 
@@ -475,7 +475,7 @@ def build_progression(
     """
     Build a musically coherent chord progression from a list of region averages.
 
-    Each region's hue → root note (snapped to scale). The chord's scale degree
+    Each region's hue to root note (snapped to scale). The chord's scale degree
     determines its base quality (functional harmony). Saturation and brightness
     act as modifiers to introduce 7ths, suspensions, and diminished chords.
 
@@ -487,7 +487,7 @@ def build_progression(
     A resolution pass ensures:
     - sus4 chords resolve to major/minor on the next chord
     - dim chords resolve up by half step or to the tonic
-    - The last chord resolves home (tonic or V→I)
+    - The last chord resolves home (tonic or VtoI)
     """
     root_offset = ROOT_OFFSETS[root]
     scale_intervals = SCALES[scale]
@@ -524,7 +524,7 @@ def build_progression(
             degree = _brightness_to_degree(reg["v"], min_v, max_v, n_degrees)
             pc = (scale_intervals[degree] + root_offset) % 12
         else:
-            # Normal mode: hue → pitch class → snap to scale
+            # Normal mode: hue to pitch class to snap to scale
             raw_pc = hue_to_pitch_class(reg["h"])
             pc = snap_to_scale(raw_pc, root_offset, scale_intervals)
             degree = pitch_class_to_scale_degree(pc, root_offset, scale_intervals)
@@ -585,7 +585,7 @@ def _apply_resolutions(
         curr = chords[i]
         nxt = chords[i + 1]
 
-        # sus4 → resolve: next chord keeps same root, becomes major or minor
+        # sus4 to resolve: next chord keeps same root, becomes major or minor
         if curr.quality == ChordQuality.SUSPENDED_4:
             degree = pitch_class_to_scale_degree(curr.root_pitch_class, root_offset, scale_intervals)
             resolved_quality = _base_quality_for_degree(degree, scale_name) if degree >= 0 else ChordQuality.MAJOR
@@ -595,12 +595,12 @@ def _apply_resolutions(
                                        scale_intervals=scale_intervals)
             chords[i + 1] = nxt_chord
 
-        # dim → resolve: next chord moves up to the nearest stable chord
+        # dim to resolve: next chord moves up to the nearest stable chord
         # (don't force it if the next chord is already sus - that creates double tension)
         if curr.quality == ChordQuality.DIMINISHED and nxt.quality not in (
             ChordQuality.SUSPENDED_4, ChordQuality.SUSPENDED_2, ChordQuality.DIMINISHED
         ):
-            # Resolve dim → one semitone up as minor, or keep existing if it's already good
+            # Resolve dim to one semitone up as minor, or keep existing if it's already good
             resolve_pc = (curr.root_pitch_class + 1) % 12
             resolve_pc = snap_to_scale(resolve_pc, root_offset, scale_intervals)
             degree = pitch_class_to_scale_degree(resolve_pc, root_offset, scale_intervals)

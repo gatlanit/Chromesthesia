@@ -1,6 +1,6 @@
 """
 tests/test_mappings.py
-Verifies the core color→music mappings and functional harmony produce
+Verifies the core colortomusic mappings and functional harmony produce
 musically correct output.
 """
 
@@ -15,7 +15,7 @@ from src.color_mapper import (
 )
 
 
-# ── Hue → Pitch Class ─────────────────────────────────────────────────────────
+# ── Hue to Pitch Class ─────────────────────────────────────────────────────────
 
 class TestHueToPitchClass:
     def test_red_maps_to_c(self):
@@ -89,7 +89,7 @@ class TestPitchClassToScaleDegree:
         assert pitch_class_to_scale_degree(9, 2, SCALES["major"]) == 4  # A is the 5th
 
 
-# ── Saturation → Chord Quality (legacy) ──────────────────────────────────────
+# ── Saturation to Chord Quality (legacy) ──────────────────────────────────────
 
 class TestSaturationToQuality:
     def test_high_saturation_is_major(self):
@@ -108,7 +108,7 @@ class TestSaturationToQuality:
         assert saturation_to_quality(0.0) == ChordQuality.MAJOR_7TH
 
 
-# ── Value → Octave ────────────────────────────────────────────────────────────
+# ── Value to Octave ────────────────────────────────────────────────────────────
 
 class TestValueToOctave:
     def test_dark_produces_low_octave(self):
@@ -127,7 +127,7 @@ class TestValueToOctave:
             assert 3 <= octave <= 5
 
 
-# ── Alpha → Velocity ──────────────────────────────────────────────────────────
+# ── Alpha to Velocity ──────────────────────────────────────────────────────────
 
 class TestAlphaToVelocity:
     def test_fully_opaque_produces_loud_velocity(self):
@@ -146,7 +146,7 @@ class TestAlphaToVelocity:
             assert 0 <= vel <= 127
 
 
-# ── Saturation → Duration ─────────────────────────────────────────────────────
+# ── Saturation to Duration ─────────────────────────────────────────────────────
 
 class TestPixelToDuration:
     def test_always_returns_standard_note_length(self):
@@ -155,7 +155,7 @@ class TestPixelToDuration:
             for g in range(0, 256, 64):
                 for b in range(0, 256, 64):
                     dur = pixel_to_duration(r, g, b, 45.0, 0.1, 0.5)
-                    assert dur in NOTE_DURATIONS, f"rgb=({r},{g},{b}) → {dur}, not standard"
+                    assert dur in NOTE_DURATIONS, f"rgb=({r},{g},{b}) to {dur}, not standard"
 
     def test_greyscale_pixels_produce_varied_durations(self):
         """Even greyscale pixels with subtle differences should vary rhythmically."""
@@ -212,13 +212,13 @@ class TestBaseQualityForDegree:
 
 class TestModifyQuality:
     def test_high_brightness_contrast_creates_suspension(self):
-        """Regions with sharp brightness change → sus4 or sus2."""
+        """Regions with sharp brightness change to sus4 or sus2."""
         result = _modify_quality(ChordQuality.MAJOR, saturation=0.6, brightness=0.5,
                                   brightness_delta=0.25, position=0, n_chords=4)
         assert result in (ChordQuality.SUSPENDED_4, ChordQuality.SUSPENDED_2)
 
     def test_alternating_sus_types_on_high_contrast(self):
-        """Even position → sus4, odd position → sus2."""
+        """Even position to sus4, odd position to sus2."""
         even = _modify_quality(ChordQuality.MAJOR, saturation=0.6, brightness=0.5,
                                 brightness_delta=0.25, position=0, n_chords=4)
         odd = _modify_quality(ChordQuality.MAJOR, saturation=0.6, brightness=0.5,
@@ -227,13 +227,13 @@ class TestModifyQuality:
         assert odd == ChordQuality.SUSPENDED_2
 
     def test_very_dark_desaturated_creates_diminished(self):
-        """Very dark + washed out → dim chord."""
+        """Very dark + washed out to dim chord."""
         result = _modify_quality(ChordQuality.MINOR, saturation=0.1, brightness=0.15,
                                   brightness_delta=0.05, position=0, n_chords=4)
         assert result == ChordQuality.DIMINISHED
 
     def test_saturated_chord_mostly_plain_triad(self):
-        """Highly saturated + early position → keeps base triad."""
+        """Highly saturated + early position to keeps base triad."""
         result = _modify_quality(ChordQuality.MAJOR, saturation=0.8, brightness=0.3,
                                   brightness_delta=0.05, position=0, n_chords=4)
         assert result == ChordQuality.MAJOR
@@ -275,7 +275,7 @@ class TestBuildProgression:
         # Feed regions that would produce tension (dark, desaturated, high contrast)
         regions = [
             (50, 50, 50, 255),    # dark grey
-            (200, 200, 200, 255), # bright grey (high contrast → sus)
+            (200, 200, 200, 255), # bright grey (high contrast to sus)
             (30, 30, 30, 255),    # very dark
             (100, 100, 100, 255), # mid grey
         ]
@@ -289,7 +289,7 @@ class TestBuildProgression:
         # Create high contrast to force sus4
         regions = [
             (180, 50, 50, 255),   # dark
-            (180, 220, 220, 255), # bright (big delta → sus4)
+            (180, 220, 220, 255), # bright (big delta to sus4)
             (180, 180, 180, 255), # mid (should resolve)
             (200, 100, 50, 255),  # warm ending
         ]

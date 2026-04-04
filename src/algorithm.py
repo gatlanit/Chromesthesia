@@ -1,8 +1,8 @@
 """
 algorithm.py
 Orchestrates the Chromesthesia algorithm:
-  - melody mode:   pixel scan → monophonic note sequence (capped to N bars)
-  - chords mode:   region average → chord progression (functional harmony)
+  - melody mode:   pixel scan to monophonic note sequence (capped to N bars)
+  - chords mode:   region average to chord progression (functional harmony)
   - combined mode: both tracks simultaneously, melody matches chord length
 """
 

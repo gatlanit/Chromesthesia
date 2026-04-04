@@ -41,7 +41,7 @@ def write_melody(
             track.append(Message("note_off", channel=channel, note=midi_note, velocity=0, time=duration_ticks))
 
     mid.save(output_path)
-    print(f"✓ Melody saved → {output_path}  ({len(notes)} notes, {bpm} BPM)")
+    print(f"✓ Melody saved to {output_path}  ({len(notes)} notes, {bpm} BPM)")
 
 
 def write_chords(
@@ -78,7 +78,7 @@ def write_chords(
             track.append(Message("note_off", channel=channel, note=note, velocity=0, time=t))
 
     mid.save(output_path)
-    print(f"✓ Chords saved → {output_path}  ({len(chords)} chords, {bpm} BPM)")
+    print(f"✓ Chords saved to {output_path}  ({len(chords)} chords, {bpm} BPM)")
 
 
 def write_combined(
@@ -128,4 +128,4 @@ def write_combined(
             melody_track.append(Message("note_off", channel=1, note=midi_note, velocity=0, time=duration_ticks))
 
     mid.save(output_path)
-    print(f"✓ Combined saved → {output_path}  ({len(chords)} chords + {len(notes)} melody notes, {bpm} BPM)")
+    print(f"✓ Combined saved to {output_path}  ({len(chords)} chords + {len(notes)} melody notes, {bpm} BPM)")

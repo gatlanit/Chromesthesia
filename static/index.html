@@ -15,10 +15,10 @@
       <h1 class="logo">Chromesthesia.</h1>
       <div class="hero-meta">
         <div>
-          <p class="tagline">Color &nbsp;&mdash;&nbsp; Sound &nbsp;&mdash;&nbsp; Experience</p>
-          <p class="subtitle">Upload any image and we'll transform its colors into a unique MIDI composition using the circle of fifths &mdash; ready for any DAW.</p>
+          <p class="tagline">Color &nbsp; - &nbsp; Sound &nbsp - &nbsp; Experience</p>
+          <p class="subtitle">Upload any image and we'll transform its colors into a unique MIDI composition using the circle of fifths.</p>
         </div>
-        <a href="#upload" class="cta-btn">Begin &rarr;</a>
+        <a href="#upload" class="cta-btn">Begin</a>
       </div>
     </div>
   </section>
@@ -33,7 +33,7 @@
       <div class="step-card">
         <span class="step-num">01</span>
         <h3 class="step-heading">Upload an image</h3>
-        <p class="step-text">Drag and drop any image onto the upload area, or click <em>Choose a File</em>. Photos, paintings, abstract art &mdash; the richer the colors, the more complex the composition.</p>
+        <p class="step-text">Drag and drop any image onto the upload area, or click <em>Choose a File</em>. Photos, paintings, abstract art - the richer the colors, the more complex the composition.</p>
       </div>
 
       <div class="step-card">
@@ -44,14 +44,14 @@
 
       <div class="step-card">
         <span class="step-num">03</span>
-        <h3 class="step-heading">Color &rarr; Music mapping</h3>
+        <h3 class="step-heading">Color to Music mapping</h3>
         <p class="step-text">Hue maps to pitch via the <strong>circle of fifths</strong>. Saturation shapes chord quality. Brightness sets the octave. Even transparency controls note velocity.</p>
       </div>
 
       <div class="step-card">
         <span class="step-num">04</span>
         <h3 class="step-heading">Download &amp; play</h3>
-        <p class="step-text">Hit <em>Generate</em> and download a standard <strong>MIDI file</strong>. Open it in Ableton, GarageBand, Logic, FL Studio &mdash; any DAW. Assign your own instruments and mix.</p>
+        <p class="step-text">Hit <em>Generate</em> and download a standard <strong>MIDI file</strong>. Open it in any DAW such as Ableton or GarageBand. Assign your own instruments and mix.</p>
       </div>
 
     </div>
@@ -62,7 +62,7 @@
   <section class="upload-section" id="upload">
     <span class="eyebrow">Step one</span>
     <h2 class="section-title">Drop your image.</h2>
-    <p class="section-desc">PNG, JPG, WebP, GIF, BMP, or TIFF &mdash; up to 16 MB. Images are resized to 512&times;512 for processing.</p>
+    <p class="section-desc">PNG, JPG, WebP, GIF, BMP, or TIFF - up to 16 MB. Images are resized to 512&times;512 for processing.</p>
     <div class="upload-box" id="uploadBox">
       <div class="upload-icon">&#8679;</div>
       <p class="upload-text">Drag &amp; drop an image here</p>
@@ -116,7 +116,7 @@
           <option value="A#">A# / Bb</option>
           <option value="B">B</option>
         </select>
-        <p class="pref-hint">Root note &mdash; all pitches snap to this key.</p>
+        <p class="pref-hint">Root note: all pitches snap to this key.</p>
       </div>
 
       <div class="pref-card">
@@ -134,12 +134,12 @@
       <div class="pref-card" id="scanCard">
         <label class="pref-label" for="scanPathSelect">Scan Path</label>
         <select class="pref-select" id="scanPathSelect">
-          <option value="horizontal">Horizontal (left &rarr; right)</option>
-          <option value="vertical">Vertical (top &rarr; bottom)</option>
-          <option value="spiral">Spiral (edges &rarr; center)</option>
-          <option value="diagonal">Diagonal (corner &rarr; corner)</option>
+          <option value="horizontal">Horizontal (left to right)</option>
+          <option value="vertical">Vertical (top to bottom)</option>
+          <option value="spiral">Spiral (edges to center)</option>
+          <option value="diagonal">Diagonal (corner to corner)</option>
         </select>
-        <p class="pref-hint">How pixels are read from the image &mdash; changes the musical journey.</p>
+        <p class="pref-hint">How pixels are read from the image changes the musical journey.</p>
       </div>
 
       <div class="pref-card">
@@ -177,101 +177,10 @@
     <!-- Success -->
     <div class="status-msg status-success" id="successMsg" style="display:none;">
       <p class="success-title">&#10003; MIDI file downloaded</p>
-      <p class="success-detail">Open it in any DAW &mdash; Ableton Live, GarageBand, Logic Pro, FL Studio, Reaper, or any other MIDI-compatible software.</p>
+      <p class="success-detail">Open it in any DAW such as Ableton Live and GarageBand.</p>
       <div class="success-meta" id="successMeta"></div>
     </div>
   </section>
-
-
-  <!-- MAPPING REFERENCE (static info section) -->
-  <section class="ref-section">
-    <span class="eyebrow">The mapping</span>
-    <h2 class="section-title">Circle of fifths meets the color wheel.</h2>
-    <p class="section-desc">The hue of each pixel determines its pitch class. Both systems divide a circle into 12 equal steps &mdash; a natural pairing.</p>
-
-    <div class="ref-grid">
-      <div class="ref-item" style="--swatch: #ff0000;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">C</span>
-        <span class="ref-hue">0°&thinsp;Red</span>
-      </div>
-      <div class="ref-item" style="--swatch: #ff8000;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">G</span>
-        <span class="ref-hue">30°&thinsp;Orange</span>
-      </div>
-      <div class="ref-item" style="--swatch: #ffbf00;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">D</span>
-        <span class="ref-hue">60°&thinsp;Gold</span>
-      </div>
-      <div class="ref-item" style="--swatch: #dfff00;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">A</span>
-        <span class="ref-hue">90°&thinsp;Yellow</span>
-      </div>
-      <div class="ref-item" style="--swatch: #40ff00;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">E</span>
-        <span class="ref-hue">120°&thinsp;Green</span>
-      </div>
-      <div class="ref-item" style="--swatch: #00ff80;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">B</span>
-        <span class="ref-hue">150°&thinsp;Spring</span>
-      </div>
-      <div class="ref-item" style="--swatch: #00ffff;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">F#</span>
-        <span class="ref-hue">180°&thinsp;Cyan</span>
-      </div>
-      <div class="ref-item" style="--swatch: #0080ff;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">Db</span>
-        <span class="ref-hue">210°&thinsp;Azure</span>
-      </div>
-      <div class="ref-item" style="--swatch: #0000ff;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">Ab</span>
-        <span class="ref-hue">240°&thinsp;Blue</span>
-      </div>
-      <div class="ref-item" style="--swatch: #8000ff;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">Eb</span>
-        <span class="ref-hue">270°&thinsp;Violet</span>
-      </div>
-      <div class="ref-item" style="--swatch: #ff00ff;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">Bb</span>
-        <span class="ref-hue">300°&thinsp;Magenta</span>
-      </div>
-      <div class="ref-item" style="--swatch: #ff0040;">
-        <span class="ref-swatch"></span>
-        <span class="ref-note">F</span>
-        <span class="ref-hue">330°&thinsp;Rose</span>
-      </div>
-    </div>
-
-    <div class="ref-extras">
-      <div class="ref-extra-card">
-        <h4>Saturation &rarr; Chord Quality</h4>
-        <p>High saturation produces major chords. Lower saturation yields minor, suspended, or seventh chords. The algorithm also applies functional harmony rules based on scale degree.</p>
-      </div>
-      <div class="ref-extra-card">
-        <h4>Brightness &rarr; Octave</h4>
-        <p>Dark pixels play in lower octaves (3), bright pixels in higher octaves (5). This maps the image's light/dark contrast into melodic contour.</p>
-      </div>
-      <div class="ref-extra-card">
-        <h4>Alpha &rarr; Velocity</h4>
-        <p>Transparent pixels become soft notes or musical rests. Fully opaque pixels play at full velocity. Consecutive rests merge into longer pauses.</p>
-      </div>
-    </div>
-  </section>
-
-
-  <footer class="footer">
-    <p>Chromesthesia &mdash; Where color meets sound.</p>
-  </footer>
 
   <script src="/static/app.js"></script>
 </body>

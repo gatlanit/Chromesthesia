@@ -217,7 +217,7 @@
     };
 
     xhr.onerror = () => {
-      showError('Network error — is the server running on localhost:5000?');
+      showError('Network error - is the server running on localhost:5000?');
     };
 
     xhr.send(formData);

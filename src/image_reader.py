@@ -25,7 +25,7 @@ def get_pixels(img: Image.Image) -> np.ndarray:
 
 def sample_horizontal(pixels: np.ndarray, stride: int = 1) -> Generator:
     """
-    Scan left→right, top→bottom. Yields (r, g, b, a) tuples.
+    Scan lefttoright, toptobottom. Yields (r, g, b, a) tuples.
     stride: take every Nth pixel to control note density.
     """
     h, w, _ = pixels.shape
@@ -35,7 +35,7 @@ def sample_horizontal(pixels: np.ndarray, stride: int = 1) -> Generator:
 
 
 def sample_vertical(pixels: np.ndarray, stride: int = 1) -> Generator:
-    """Scan top→bottom, left→right."""
+    """Scan toptobottom, lefttoright."""
     h, w, _ = pixels.shape
     for col in range(0, w, max(stride, 1)):
         for row in range(0, h, max(stride, 1)):
@@ -113,7 +113,7 @@ def get_regions(img: Image.Image, n: int, axis: str = "vertical") -> list[np.nda
     """
     Divide image into N equal strips along the given axis.
     Returns list of pixel arrays, one per strip.
-    axis: 'vertical' (left→right strips) or 'horizontal' (top→bottom strips)
+    axis: 'vertical' (lefttoright strips) or 'horizontal' (toptobottom strips)
     """
     pixels = get_pixels(img)
     h, w, _ = pixels.shape
