@@ -15,7 +15,7 @@ from src.color_mapper import (
 )
 from src.midi_writer import write_melody, write_chords, write_combined
 
-# Fixed BPM — DAWs can adjust tempo on their own
+# Fixed BPM - DAWs can adjust tempo on their own
 DEFAULT_BPM = 120
 
 

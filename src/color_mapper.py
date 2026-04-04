@@ -237,7 +237,7 @@ def pixel_to_duration(r: int, g: int, b: int, hue: float,
     # Saturation component
     sat_energy = saturation
 
-    # Combine — lum_hash gets highest weight to ensure maximum variation
+    # Combine - lum_hash gets highest weight to ensure maximum variation
     score = (
         lum_hash * 0.45 +
         bright_energy * 0.20 +
@@ -378,7 +378,7 @@ def _modify_quality(base: ChordQuality, saturation: float, brightness: float,
       - Diminished
 
     Uses a "voicing score" derived from brightness, saturation, delta,
-    and position — this avoids the old problem of every low-sat region
+    and position - this avoids the old problem of every low-sat region
     hitting the same branch and producing identical chord types.
     """
     # ── High contrast → suspension (tension point) ────────────────────────────
@@ -594,7 +594,7 @@ def _apply_resolutions(
             chords[i + 1] = nxt_chord
 
         # dim → resolve: next chord moves up to the nearest stable chord
-        # (don't force it if the next chord is already sus — that creates double tension)
+        # (don't force it if the next chord is already sus - that creates double tension)
         if curr.quality == ChordQuality.DIMINISHED and nxt.quality not in (
             ChordQuality.SUSPENDED_4, ChordQuality.SUSPENDED_2, ChordQuality.DIMINISHED
         ):

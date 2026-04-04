@@ -28,13 +28,19 @@
     .drop-zone-active { border-color: #8b5cf6 !important; background: rgba(139, 92, 246, 0.08) !important; }
     @keyframes pulse-border { 0%, 100% { border-color: #2a2a2a; } 50% { border-color: #8b5cf6; } }
     .generating { animation: pulse-border 1.5s ease-in-out infinite; }
+    .progress-bar { transition: width 0.3s ease; }
+    @keyframes progress-indeterminate {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+    .progress-indeterminate { animation: progress-indeterminate 1.4s ease-in-out infinite; width: 25%; }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useRef, useCallback } = React;
+    const { useState, useRef, useCallback, useEffect } = React;
 
     const KEYS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
     const SCALES = ['major','minor','pentatonic','dorian','mixolydian'];
@@ -76,16 +82,25 @@
       const [error, setError] = useState(null);
       const [success, setSuccess] = useState(false);
       const [dragOver, setDragOver] = useState(false);
+      const [uploadProgress, setUploadProgress] = useState(0);
+      const [uploading, setUploading] = useState(false);
+      const [genProgress, setGenProgress] = useState(0);
+      const [genStage, setGenStage] = useState('');
       const fileInputRef = useRef(null);
 
       const handleFile = useCallback((f) => {
         if (!f) return;
-        setFile(f);
         setError(null);
         setSuccess(false);
-        const reader = new FileReader();
-        reader.onload = (e) => setPreview(e.target.result);
-        reader.readAsDataURL(f);
+        setUploading(true);
+        setUploadProgress(0);
+
+        // Use createObjectURL for instant preview (no base64 encoding delay)
+        const objectUrl = URL.createObjectURL(f);
+        setUploadProgress(100);
+        setFile(f);
+        setPreview(objectUrl);
+        setTimeout(() => setUploading(false), 300);
       }, []);
 
       const handleDrop = useCallback((e) => {
@@ -101,6 +116,8 @@
         setLoading(true);
         setError(null);
         setSuccess(false);
+        setGenProgress(0);
+        setGenStage('Uploading image...');
 
         const formData = new FormData();
         formData.append('image', file);
@@ -112,18 +129,57 @@
         formData.append('stride', '4');
 
         try {
-          const res = await fetch('/generate', { method: 'POST', body: formData });
+          const blob = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/generate');
+            xhr.responseType = 'blob';
 
-          if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error || 'Generation failed');
-          }
+            // Upload progress (0–60% of bar)
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 60);
+                setGenProgress(pct);
+                if (pct >= 55) setGenStage('Processing pixels...');
+              }
+            };
 
-          const blob = await res.blob();
+            xhr.upload.onload = () => {
+              setGenProgress(60);
+              setGenStage('Mapping colors to music...');
+              // Simulate processing stages while server works
+              setTimeout(() => { setGenProgress(72); setGenStage('Building chord progression...'); }, 300);
+              setTimeout(() => { setGenProgress(82); setGenStage('Generating melody...'); }, 600);
+              setTimeout(() => { setGenProgress(90); setGenStage('Writing MIDI...'); }, 900);
+            };
+
+            xhr.onload = () => {
+              setGenProgress(100);
+              setGenStage('Done!');
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.response);
+              } else {
+                // Try to parse error from response
+                const reader = new FileReader();
+                reader.onload = () => {
+                  try {
+                    const data = JSON.parse(reader.result);
+                    reject(new Error(data.error || 'Generation failed'));
+                  } catch {
+                    reject(new Error('Generation failed'));
+                  }
+                };
+                reader.readAsText(xhr.response);
+              }
+            };
+
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send(formData);
+          });
+
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `chromatic-synthesis-${mode}-${musicKey}-${scale}.mid`;
+          a.download = `chromesthesia-${mode}-${musicKey}-${scale}.mid`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -133,10 +189,13 @@
           setError(err.message);
         } finally {
           setLoading(false);
+          setGenProgress(0);
+          setGenStage('');
         }
       };
 
       const clearImage = () => {
+        if (preview) URL.revokeObjectURL(preview);
         setFile(null);
         setPreview(null);
         setSuccess(false);
@@ -152,7 +211,7 @@
               <h1 className="text-2xl font-semibold text-white tracking-tight">
                 Chromesthesia
               </h1>
-              <p className="text-zinc-500 text-sm mt-1">Image → MIDI</p>
+              <p className="text-zinc-500 text-sm mt-1">Image to MIDI</p>
             </div>
 
             <div className={`bg-card border border-border rounded-2xl p-6 space-y-5 ${loading ? 'generating' : ''}`}>
@@ -185,7 +244,10 @@
                   </div>
                 ) : (
                   <div className="text-center">
-                    <div className="text-3xl mb-2">🎨</div>
+                    <svg className="mx-auto mb-2" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
                     <p className="text-zinc-400 text-sm">Drop an image here or click to upload</p>
                     <p className="text-zinc-600 text-xs mt-1">JPG, PNG, WebP, GIF</p>
                   </div>
@@ -198,6 +260,22 @@
                   onChange={(e) => handleFile(e.target.files[0])}
                 />
               </div>
+
+              {/* Upload Progress Bar */}
+              {uploading && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-400">Loading image...</span>
+                    <span className="text-zinc-500">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-accent rounded-full progress-bar"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Options Grid */}
               <div className="grid grid-cols-2 gap-3">
@@ -213,6 +291,26 @@
                     formatLabel={s => s.charAt(0).toUpperCase() + s.slice(1)} />
                 )}
               </div>
+
+              {/* Generation Progress Bar */}
+              {loading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-400">{genStage}</span>
+                    <span className="text-zinc-500">{genProgress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    {genProgress > 0 ? (
+                      <div
+                        className="h-full bg-accent rounded-full progress-bar"
+                        style={{ width: `${genProgress}%` }}
+                      />
+                    ) : (
+                      <div className="h-full bg-accent rounded-full progress-indeterminate" />
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Generate Button */}
               <button
@@ -233,7 +331,7 @@
                     Generating...
                   </span>
                 ) : success ? (
-                  <span>✓ Downloaded — Generate Again</span>
+                  <span>✓ Downloaded - Generate Again</span>
                 ) : (
                   <span>Generate MIDI</span>
                 )}
@@ -247,14 +345,14 @@
               )}
               {success && !error && (
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-2.5 text-emerald-400 text-sm">
-                  MIDI file downloaded. Open it in GarageBand, MuseScore, or any DAW.
+                  MIDI file downloaded. Open it in any DAW such as Ableton Live or GarageBand.
                 </div>
               )}
             </div>
 
             {/* Footer */}
             <p className="text-center text-zinc-700 text-xs mt-4">
-              Color wheel → Circle of fifths · HSV → Pitch, quality, rhythm
+              Color wheel to Circle of fifths · HSV to Pitch, chord type, rhythm
             </p>
           </div>
         </div>

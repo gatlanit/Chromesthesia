@@ -1,5 +1,5 @@
 """
-server.py — Flask backend for Chromesthesia web app.
+server.py - Flask backend for Chromesthesia web app.
 
 Routes:
   GET  /           → serves the React frontend

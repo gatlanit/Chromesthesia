@@ -271,7 +271,7 @@ class TestBuildProgression:
         assert len(chords) == 4
 
     def test_final_chord_is_never_suspended_or_diminished(self):
-        """Progression should resolve — last chord must be stable."""
+        """Progression should resolve - last chord must be stable."""
         # Feed regions that would produce tension (dark, desaturated, high contrast)
         regions = [
             (50, 50, 50, 255),    # dark grey
