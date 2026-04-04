@@ -2,7 +2,7 @@
 server.py - Flask backend for Chromesthesia web app.
 
 Routes:
-  GET  /           → serves the React frontend
+  GET  /           → serves the frontend (static HTML/CSS/JS)
   POST /generate   → accepts image + options, returns .mid file download
 """
 
